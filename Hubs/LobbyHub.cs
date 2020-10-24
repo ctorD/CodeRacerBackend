@@ -27,9 +27,9 @@ namespace CodeRacerBackend.Hubs
                 return base.OnConnectedAsync();
             }
 
-            public async Task CreateLobby(string user, string lobbyName, string lang)
+            public async Task CreateLobby(string user, string lobbyName, string lang, bool online)
             {
-                var lobby = new Lobby(lang, user, lobbyName);
+                var lobby = new Lobby(lang, user, lobbyName, online);
 
                 await Groups.AddToGroupAsync(Context.ConnectionId, lobbyName);
 
@@ -37,11 +37,13 @@ namespace CodeRacerBackend.Hubs
 
 
             }
-            public void JoinLobby(string lobbyName, string userName)
+            public void JoinLobby(string lobbyId)
             {
-                lobbies.Find(e => e.LobbyName == lobbyName).Join(userName, Context.ConnectionId);
+                var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
+                
+                lobby.Join(Context.ConnectionId);
 
-                Groups.AddToGroupAsync(Context.ConnectionId, lobbyName);
+                Groups.AddToGroupAsync(Context.ConnectionId, lobbyId);
 
             }
 

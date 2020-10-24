@@ -17,7 +17,7 @@ namespace CodeRacerBackend.Controllers
         {
             //Code to get new github snippit
 
-            var lobbies = LobbyHub.lobbies.ToArray();
+            var lobbies = LobbyHub.lobbies.ToArray().Where(e => e.MaxPlayers > 1);
 
             return Ok(lobbies);
 
