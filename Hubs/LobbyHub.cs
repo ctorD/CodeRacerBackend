@@ -7,6 +7,8 @@ namespace CodeRacerBackend.Hubs
 {
     using CodeRacerBackend.CodeRacerLogic;
     using Microsoft.AspNetCore.SignalR;
+    using Microsoft.Extensions.Logging;
+    using Serilog;
     using System.Threading.Tasks;
 
     namespace SignalRChat.Hubs
@@ -14,16 +16,16 @@ namespace CodeRacerBackend.Hubs
         public class LobbyHub : Hub
         {
             public static List<Lobby> lobbies = new List<Lobby>();
-          
 
-            
+
+
             List<string> users = new List<string>();
 
-          
+
             public override Task OnConnectedAsync()
             {
                 var username = Context.GetHttpContext().Request.Query["username"];
-                
+
                 return base.OnConnectedAsync();
             }
 
@@ -33,33 +35,57 @@ namespace CodeRacerBackend.Hubs
 
                 await Groups.AddToGroupAsync(Context.ConnectionId, lobbyName);
 
+                Log.Information("Created Lobby | User {userId} | Lobby Name: {lobbyName} | Language: {lang} | Online : {online}", user, lobbyName, lang, online);
+
                 lobbies.Add(lobby);
 
 
             }
-            public void JoinLobby(string lobbyId)
+            public async void JoinLobby(string lobbyId)
             {
                 var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
-                
+
                 lobby.Join(Context.ConnectionId);
+                await Groups.AddToGroupAsync(Context.ConnectionId, lobbyId);
 
-                Groups.AddToGroupAsync(Context.ConnectionId, lobbyId);
+                Log.Information("User: {userId} joined {lobbyId}", Context.ConnectionId, lobbyId);
+
+                Console.WriteLine(Groups.ToString());
 
             }
 
-            public void LeaveLobby(string lobbyName, string userName)
+            public async void LeaveLobby(string lobbyName, string userName)
             {
-                lobbies.Find(e => e.LobbyName == lobbyName).Leave(Context.ConnectionId);
+                await Task.Run(() =>
+                {
+                    lobbies.Find(e => e.LobbyName == lobbyName).Leave(Context.ConnectionId);
+                });
             }
 
-            public void StartGame(string lobbyId)
+
+            public override async Task OnDisconnectedAsync(Exception exception)
             {
-                lobbies.Find(e => e.LobbyId == lobbyId).Leave(Context.ConnectionId);
+                Console.WriteLine("Disconnection");
+
+                lobbies.RemoveAll(lobby => lobby.Host == Context.ConnectionId);
+
+                lobbies.ForEach(lobby =>
+                {
+                    lobby.Players.Remove(Context.ConnectionId);
+                });
+
+                await base.OnDisconnectedAsync(exception);
+
             }
 
-            
 
 
+            public async Task StartGame(string lobbyId)
+            {
+                var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
+                await Task.Run(() => lobby.Start());
+
+            }
 
 
 

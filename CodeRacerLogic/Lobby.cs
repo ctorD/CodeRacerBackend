@@ -1,6 +1,7 @@
 ﻿using CodeRacerBackend.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -17,12 +18,17 @@ namespace CodeRacerBackend.CodeRacerLogic
         public int MaxPlayers { get; set; }
         public string Snippet { get; set; }
         public List<String> Players { get; set; }
+        
+        public List<Tuple<String, TimeSpan>> Scores { get; set; }
+
+        Stopwatch stopWatch = new Stopwatch();
+
 
         //public String GenerateLobbyId(string user)
         //{ 
 
         //    return DateTime.Now.ToString().GetHashCode().ToString(user);
-            
+
         //}
 
         public string GenerateLobbyId(string user)
@@ -41,11 +47,16 @@ namespace CodeRacerBackend.CodeRacerLogic
             this.Players = new List<string>();
         }
 
-        public void Join(string connectionId)
+        public Boolean Join(string connectionId)
         {
-            if (!Players.Contains(connectionId))
+            if (!Players.Contains(connectionId) && Players.Count != MaxPlayers)
             {
                 Players.Add(connectionId);
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
@@ -56,12 +67,30 @@ namespace CodeRacerBackend.CodeRacerLogic
 
         public void Start()
         {
+            stopWatch.Start();
+            if (stopWatch.IsRunning)
+            {
+                Console.WriteLine(stopWatch.Elapsed.TotalMilliseconds);
+            }
+            Console.WriteLine("Timer Starting for" + LobbyId);
+        }
+
+        public void gameFinished()
+        {
 
         }
 
-     
 
+       
 
+        public void PlayerComplete(string user)
+        {
+            Scores.Add(new Tuple<String, TimeSpan>(user, stopWatch.Elapsed));
+            if(Scores.Count == MaxPlayers)
+            {
+                gameFinished();
+            }
+        }
 
     }
 }
