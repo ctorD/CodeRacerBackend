@@ -1,37 +1,25 @@
-﻿
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using QuickType;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace CodeRacerBackend.Utils
 {
     public class SnippetFinder
     {
-
         public SnippetFinder()
         {
-
         }
 
         private string getRepo(string lang)
         {
-
             var urlParams = $"repositories?q=tetris+language:{lang}&sort=stars&order=desc";
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri("https://api.github.com/search/");
             client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "CodeRacer");
 
             //Accept JSON
-
 
             HttpResponseMessage response = client.GetAsync(urlParams).Result;
             if (response.IsSuccessStatusCode)
@@ -46,12 +34,9 @@ namespace CodeRacerBackend.Utils
             }
             else
             {
-
                 Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
                 return null;
-
             }
-
         }
 
         private string findSnippetParamBuilder(string lang, string repo, string keyword)
@@ -61,10 +46,8 @@ namespace CodeRacerBackend.Utils
             return urlParams;
         }
 
-
         public string getSnippet(string lang)
         {
-
             //Search for keyword depending on language
 
             var repo = getRepo(lang);
@@ -80,19 +63,19 @@ namespace CodeRacerBackend.Utils
             switch (lang)
             {
                 case "javascript":
-                    //Javascript keywords = function 
+                    //Javascript keywords = function
                     urlParams = findSnippetParamBuilder(lang, repo, keyword);
                     break;
+
                 case "java":
                     //Java keywords = "public void", "private void", "private string"
 
                     break;
+
                 case "csharp":
                     //csharp keywords = "public void", "private void", "private string"
 
                     break;
-
-
             }
 
             HttpResponseMessage response = client.GetAsync(urlParams).Result;
@@ -103,7 +86,6 @@ namespace CodeRacerBackend.Utils
                 var jo = JObject.Parse(dataObjects);
                 var randomFile = new Random().Next(0, jo.Count);
                 var fileUrl = jo["items"][randomFile]["url"].ToString();
-
 
                 var dlLink = getDownloadLink(fileUrl, keyword);
 
@@ -116,19 +98,14 @@ namespace CodeRacerBackend.Utils
                 {
                     throw new Exception("Could not find download link");
                 }
-
-
-
             }
             else
             {
                 Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
                 return null;
-
             }
-
-
         }
+
         public List<int> GetAllIndexes(string source, string matchString)
         {
             List<int> test = new List<int>();
@@ -140,6 +117,7 @@ namespace CodeRacerBackend.Utils
 
             return test;
         }
+
         private string extractSnippet(string downloadLink, string keyword)
         {
             HttpClient client = new HttpClient();
@@ -147,7 +125,6 @@ namespace CodeRacerBackend.Utils
             HttpResponseMessage response = client.GetAsync("").Result;
             if (response.IsSuccessStatusCode)
             {
-
                 string file = response.Content.ReadAsStringAsync().Result;
 
                 file = file.Trim();
@@ -156,12 +133,9 @@ namespace CodeRacerBackend.Utils
 
                 var randomIndex = new Random().Next(0, AllIndexes.Count);
 
-
                 file = file.Substring(AllIndexes[randomIndex], file.Length - AllIndexes[randomIndex]);
 
                 var beforeFunctionBlock = file.Substring(0, file.IndexOf('{'));
-
-
 
                 var matches = Regex.Matches(file, @"{((?>[^{}]+|{(?<c>)|}(?<-c>))*(?(c)(?!)))");
 
@@ -170,16 +144,13 @@ namespace CodeRacerBackend.Utils
                 var fullFunction = beforeFunctionBlock + functionBlock;
 
                 return fullFunction;
-
             }
             else
             {
                 Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
 
                 return null;
-
             }
-
         }
 
         private string getDownloadLink(string gitUrl, string keyWord)
@@ -196,18 +167,12 @@ namespace CodeRacerBackend.Utils
                 var downloadUrl = jo["download_url"].ToString();
 
                 return downloadUrl;
-
-
-
             }
             else
             {
                 Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
                 return null;
             }
-
-
-
         }
     }
 }

@@ -1,10 +1,7 @@
-﻿using CodeRacerBackend.CodeRacerLogic;
-using CodeRacerBackend.Hubs.SignalRChat.Hubs;
+﻿using CodeRacerBackend.Hubs.SignalRChat.Hubs;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace CodeRacerBackend.Controllers
 {
@@ -20,9 +17,6 @@ namespace CodeRacerBackend.Controllers
             var lobbies = LobbyHub.lobbies.ToArray().Where(e => e.MaxPlayers > 1);
 
             return Ok(lobbies);
-
         }
-
     }
 }
-

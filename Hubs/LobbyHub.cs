@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CodeRacerBackend.Hubs
 {
     using CodeRacerBackend.CodeRacerLogic;
     using Microsoft.AspNetCore.SignalR;
-    using Microsoft.Extensions.Logging;
     using Serilog;
+    using System.Text.RegularExpressions;
     using System.Threading.Tasks;
 
     namespace SignalRChat.Hubs
@@ -17,10 +15,7 @@ namespace CodeRacerBackend.Hubs
         {
             public static List<Lobby> lobbies = new List<Lobby>();
 
-
-
-            List<string> users = new List<string>();
-
+            private List<string> users = new List<string>();
 
             public override Task OnConnectedAsync()
             {
@@ -38,9 +33,8 @@ namespace CodeRacerBackend.Hubs
                 Log.Information("Created Lobby | User {userId} | Lobby Name: {lobbyName} | Language: {lang} | Online : {online}", user, lobbyName, lang, online);
 
                 lobbies.Add(lobby);
-
-
             }
+
             public async void JoinLobby(string lobbyId)
             {
                 var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
@@ -51,7 +45,6 @@ namespace CodeRacerBackend.Hubs
                 Log.Information("User: {userId} joined {lobbyId}", Context.ConnectionId, lobbyId);
 
                 Console.WriteLine(Groups.ToString());
-
             }
 
             public async void LeaveLobby(string lobbyName, string userName)
@@ -61,7 +54,6 @@ namespace CodeRacerBackend.Hubs
                     lobbies.Find(e => e.LobbyName == lobbyName).Leave(Context.ConnectionId);
                 });
             }
-
 
             public override async Task OnDisconnectedAsync(Exception exception)
             {
@@ -75,18 +67,21 @@ namespace CodeRacerBackend.Hubs
                 });
 
                 await base.OnDisconnectedAsync(exception);
-
             }
-
-
 
             public async Task StartGame(string lobbyId)
             {
                 var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
                 await Task.Run(() => lobby.Start());
-
+                await Clients.Group(lobbyId).SendAsync("StartGame");
             }
 
+            public async Task UserComplete(string lobbyId, string time)
+            {
+                var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
+                await Task.Run(() => lobby.PlayerComplete(Context.ConnectionId, time));
+                await Clients.Group(lobbyId).SendAsync("UpdateScoreboard", lobby.Scores);
+            }
 
 
             public async Task RemoveFromGroup(string lobbyName)
@@ -95,8 +90,6 @@ namespace CodeRacerBackend.Hubs
 
                 await Clients.Group(lobbyName).SendAsync("Send", $"{Context.ConnectionId} has left the group {lobbyName}.");
             }
-
-
         }
     }
 }

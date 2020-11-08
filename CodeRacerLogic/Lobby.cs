@@ -2,9 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 namespace CodeRacerBackend.CodeRacerLogic
 {
@@ -18,18 +15,9 @@ namespace CodeRacerBackend.CodeRacerLogic
         public int MaxPlayers { get; set; }
         public string Snippet { get; set; }
         public List<String> Players { get; set; }
-        
-        public List<Tuple<String, TimeSpan>> Scores { get; set; }
 
-        Stopwatch stopWatch = new Stopwatch();
-
-
-        //public String GenerateLobbyId(string user)
-        //{ 
-
-        //    return DateTime.Now.ToString().GetHashCode().ToString(user);
-
-        //}
+        public List<Tuple<String, TimeSpan>> Scores = new List<Tuple<string, TimeSpan>>();
+        private Stopwatch stopWatch = new Stopwatch();
 
         public string GenerateLobbyId(string user)
         {
@@ -75,22 +63,17 @@ namespace CodeRacerBackend.CodeRacerLogic
             Console.WriteLine("Timer Starting for" + LobbyId);
         }
 
-        public void gameFinished()
+        public void GameFinished(string connectionId, string time)
         {
-
         }
 
-
-       
-
-        public void PlayerComplete(string user)
+        public void PlayerComplete(string user, string time)
         {
             Scores.Add(new Tuple<String, TimeSpan>(user, stopWatch.Elapsed));
-            if(Scores.Count == MaxPlayers)
+            if (Scores.Count != MaxPlayers)
             {
-                gameFinished();
+                Scores.Add(new Tuple<String, TimeSpan>(user, TimeSpan.Parse(time)));
             }
         }
-
     }
 }

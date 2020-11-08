@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CodeRacerBackend.Utils;
-using Microsoft.AspNetCore.Http;
+﻿using CodeRacerBackend.Utils;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace CodeRacerBackend.Controllers
 {
@@ -19,13 +15,9 @@ namespace CodeRacerBackend.Controllers
 
             SnippetFinder snippetFinder = new SnippetFinder();
 
-
-            var snippit = snippetFinder.getSnippet("javascript"); 
-
+            var snippit = snippetFinder.getSnippet("javascript");
 
             return Ok(snippit);
-
         }
-
     }
 }
