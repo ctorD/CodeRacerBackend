@@ -31,7 +31,8 @@ namespace CodeRacerBackend.CodeRacerLogic
       this.MaxPlayers = online ? 4 : 1;
       this.LobbyId = GenerateLobbyId(user);
       SnippetFinder sf = new SnippetFinder();
-      this.Snippet = sf.getSnippet(lang);
+      // this.Snippet = sf.getSnippet(lang);
+      this.Snippet = "test";
       this.Players = new List<string>();
     }
 
@@ -73,7 +74,7 @@ namespace CodeRacerBackend.CodeRacerLogic
       // Scores.Add(new Tuple<String, TimeSpan>(user + "stopwatch", stopWatch.Elapsed));
       if (Scores.Count != MaxPlayers)
       {
-        Scores.Add(new Tuple<String, TimeSpan>(user + "timespan", TimeSpan.Parse(time)));
+        Scores.Add(new Tuple<String, TimeSpan>(user, TimeSpan.Parse(time)));
       }
     }
   }
