@@ -12,9 +12,9 @@ namespace CodeRacerBackend.Controllers
         [HttpGet]
         public ActionResult<String> GetLobbies()
         {
-            //Code to get new github snippit
+            //Code to get new github snippet
 
-            var lobbies = LobbyHub.lobbies.ToArray().Where(e => e.MaxPlayers > 1);
+            var lobbies = LobbyHub.Lobbies.ToArray().Where(e => e.MaxPlayers > 1);
 
             return Ok(lobbies);
         }
