@@ -13,9 +13,9 @@ namespace CodeRacerBackend.Controllers
         {
             //Code to get new github snippit
 
-            SnippetFinder snippetFinder = new SnippetFinder();
+           // SnippetFinder snippetFinder = new SnippetFinder();
 
-            var snippit = snippetFinder.GetSnippet("javascript");
+           var snippit = "";
 
             return Ok(snippit);
         }

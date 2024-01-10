@@ -1,8 +1,10 @@
 using CodeRacerBackend.Hubs.SignalRChat.Hubs;
+using CodeRacerBackend.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyModel;
 using Microsoft.Extensions.Hosting;
 
 
@@ -31,7 +33,8 @@ namespace CodeRacerBackend
 
             services.AddSignalR();
             services.AddControllers();
-            
+            services.AddSingleton<ISnippetFinder>((provider => new SnippetFinder(Configuration)));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

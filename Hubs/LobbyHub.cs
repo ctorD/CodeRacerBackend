@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CodeRacerBackend.Utils;
 
 namespace CodeRacerBackend.Hubs
 {
@@ -13,9 +14,13 @@ namespace CodeRacerBackend.Hubs
     {
         public class LobbyHub : Hub
         {
+            private readonly ISnippetFinder _snippetFinder;
             public static readonly List<Lobby> Lobbies = new List<Lobby>();
             private static readonly Dictionary<string, string> NameByConnectionId = new Dictionary<string, string>();
-
+            public LobbyHub(ISnippetFinder snippetFinder)
+            {
+                _snippetFinder = snippetFinder;
+            }
             public override Task OnConnectedAsync()
             {
                 //TODO: Add username to cookie instead of setting each time
@@ -26,7 +31,8 @@ namespace CodeRacerBackend.Hubs
 
             public async Task CreateLobby(string user, string lobbyName, string lang, bool online)
             {
-                var lobby = new Lobby(lang, user, lobbyName, online);
+                var lobby = new Lobby(_snippetFinder);
+                lobby.Initalise(lang, user, lobbyName, online);
 
                 await Groups.AddToGroupAsync(Context.ConnectionId, lobbyName);
 

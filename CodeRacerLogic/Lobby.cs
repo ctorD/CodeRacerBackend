@@ -8,6 +8,7 @@ namespace CodeRacerBackend.CodeRacerLogic
 {
   public class Lobby
   {
+    private readonly ISnippetFinder _snippetFinder;
     public string LobbyId { get; set; }
     public string LobbyName { get; set; }
     public string Host { get; set; }
@@ -23,16 +24,20 @@ namespace CodeRacerBackend.CodeRacerLogic
       return $"{user}_{Guid.NewGuid():N}";
     }
 
-    public Lobby(string lang, string user, string lobbyName, bool online)
+    public void Initalise(string lang, string user, string lobbyName, bool online)
     {
       LobbyName = lobbyName;
       Host = user;
       this.MaxPlayers = online ? 4 : 1;
       this.LobbyId = GenerateLobbyId(user);
-      SnippetFinder sf = new SnippetFinder();
-      this.Snippet = sf.GetSnippet(lang);
+      this.Snippet = _snippetFinder.GetSnippet(lang);
       //this.Snippet = "test";
       this.Players = new List<Player>();
+    }
+
+    public Lobby(ISnippetFinder snippetFinder)
+    {
+      _snippetFinder = snippetFinder;
     }
 
     public void Join(Player player)
