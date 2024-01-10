@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 
 namespace CodeRacerBackend.Utils
@@ -12,7 +13,7 @@ namespace CodeRacerBackend.Utils
         {
         }
 
-        private string getRepo(string lang)
+        private string GetRepo(string lang)
         {
             var urlParams = $"repositories?q=tetris+language:{lang}&sort=stars&order=desc";
             HttpClient client = new HttpClient();
@@ -39,22 +40,27 @@ namespace CodeRacerBackend.Utils
             }
         }
 
-        private string findSnippetParamBuilder(string lang, string repo, string keyword)
+        private string FindSnippetParamBuilder(string lang, string repo, string keyword)
         {
             var urlParams = $"code?q={keyword}+in:file+language:{lang}+repo:{repo}";
 
             return urlParams;
         }
 
-        public string getSnippet(string lang)
+        public string GetSnippet(string lang)
         {
             //Search for keyword depending on language
 
-            var repo = getRepo(lang);
+            var repo = GetRepo(lang);
 
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri("https://api.github.com/search/");
-            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "CodeRacer");
+            client.DefaultRequestHeaders.Add("User-Agent", "request");
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", "");
+            
+            //client.DefaultRequestHeaders.Add("Authorization", "5c394c85f95a938bf97e7f2a49af448883317f3f");
+           //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
 
             string urlParams = "";
 
@@ -64,7 +70,7 @@ namespace CodeRacerBackend.Utils
             {
                 case "javascript":
                     //Javascript keywords = function
-                    urlParams = findSnippetParamBuilder(lang, repo, keyword);
+                    urlParams = FindSnippetParamBuilder(lang, repo, keyword);
                     break;
 
                 case "java":
@@ -87,11 +93,11 @@ namespace CodeRacerBackend.Utils
                 var randomFile = new Random().Next(0, jo.Count);
                 var fileUrl = jo["items"][randomFile]["url"].ToString();
 
-                var dlLink = getDownloadLink(fileUrl, keyword);
+                var dlLink = GetDownloadLink(fileUrl, keyword);
 
                 if (dlLink != null)
                 {
-                    var snippet = extractSnippet(dlLink, keyword);
+                    var snippet = ExtractSnippet(dlLink, keyword);
                     return snippet;
                 }
                 else
@@ -118,7 +124,7 @@ namespace CodeRacerBackend.Utils
             return test;
         }
 
-        private string extractSnippet(string downloadLink, string keyword)
+        private string ExtractSnippet(string downloadLink, string keyword)
         {
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(downloadLink);
@@ -129,11 +135,11 @@ namespace CodeRacerBackend.Utils
 
                 file = file.Trim();
 
-                var AllIndexes = GetAllIndexes(file, keyword);
+                var allIndexes = GetAllIndexes(file, keyword);
 
-                var randomIndex = new Random().Next(0, AllIndexes.Count);
+                var randomIndex = new Random().Next(0, allIndexes.Count);
 
-                file = file.Substring(AllIndexes[randomIndex], file.Length - AllIndexes[randomIndex]);
+                file = file.Substring(allIndexes[randomIndex], file.Length - allIndexes[randomIndex]);
 
                 var beforeFunctionBlock = file.Substring(0, file.IndexOf('{'));
 
@@ -153,7 +159,7 @@ namespace CodeRacerBackend.Utils
             }
         }
 
-        private string getDownloadLink(string gitUrl, string keyWord)
+        private string GetDownloadLink(string gitUrl, string keyWord)
         {
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(gitUrl);

@@ -15,7 +15,7 @@ namespace CodeRacerBackend.Controllers
 
             SnippetFinder snippetFinder = new SnippetFinder();
 
-            var snippit = snippetFinder.getSnippet("javascript");
+            var snippit = snippetFinder.GetSnippet("javascript");
 
             return Ok(snippit);
         }

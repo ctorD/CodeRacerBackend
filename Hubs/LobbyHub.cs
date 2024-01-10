@@ -13,12 +13,12 @@ namespace CodeRacerBackend.Hubs
     {
         public class LobbyHub : Hub
         {
-            public static List<Lobby> lobbies = new List<Lobby>();
-
-            private List<string> users = new List<string>();
+            public static readonly List<Lobby> Lobbies = new List<Lobby>();
+            private static readonly Dictionary<string, string> NameByConnectionId = new Dictionary<string, string>();
 
             public override Task OnConnectedAsync()
             {
+                //TODO: Add username to cookie instead of setting each time
                 var username = Context.GetHttpContext().Request.Query["username"];
 
                 return base.OnConnectedAsync();
@@ -30,19 +30,24 @@ namespace CodeRacerBackend.Hubs
 
                 await Groups.AddToGroupAsync(Context.ConnectionId, lobbyName);
 
-                Log.Information("Created Lobby | User {userId} | Lobby Name: {lobbyName} | Language: {lang} | Online : {online}", user, lobbyName, lang, online);
+                Log.Information("Created Lobby | User {UserId} | Lobby Name: {LobbyName} | Language: {Lang} | Online : {Online}", user, lobbyName, lang, online);
 
-                lobbies.Add(lobby);
+                Lobbies.Add(lobby);
             }
 
             public async void JoinLobby(string lobbyId)
             {
-                var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
+                var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
+                NameByConnectionId.TryGetValue(Context.ConnectionId, out string name);
+                var player = name != null ? new Player(Context.ConnectionId, name) : new Player(Context.ConnectionId);
+                if (!lobby.HasPlayer(player))
+                {
+                    lobby.Join(player);
+                    await Groups.AddToGroupAsync(Context.ConnectionId, lobbyId);
+                    await Clients.Group(lobbyId).SendAsync("UpdateUserList", lobby.Players);
 
-                lobby.Join(Context.ConnectionId);
-                await Groups.AddToGroupAsync(Context.ConnectionId, lobbyId);
-
-                Log.Information("User: {userId} joined {lobbyId}", Context.ConnectionId, lobbyId);
+                    Log.Information("User: {UserId} joined {LobbyId}", Context.ConnectionId, lobbyId);
+                }
 
                 Console.WriteLine(Groups.ToString());
             }
@@ -51,7 +56,7 @@ namespace CodeRacerBackend.Hubs
             {
                 await Task.Run(() =>
                 {
-                    lobbies.Find(e => e.LobbyName == lobbyName).Leave(Context.ConnectionId);
+                    Lobbies.Find(e => e.LobbyName == lobbyName).Leave(Context.ConnectionId);
                 });
             }
 
@@ -59,28 +64,57 @@ namespace CodeRacerBackend.Hubs
             {
                 Console.WriteLine("Disconnection");
 
-                lobbies.RemoveAll(lobby => lobby.Host == Context.ConnectionId);
-
-                lobbies.ForEach(lobby =>
+                NameByConnectionId.Remove(Context.ConnectionId);
+                Lobbies.RemoveAll(lobby => lobby.Host == Context.ConnectionId);
+                Lobbies.ForEach(lobby =>
                 {
-                    lobby.Players.Remove(Context.ConnectionId);
+                    var player = lobby.Players.Find(p => p.ConnectionId == Context.ConnectionId);
+                    if (player != null)
+                    {
+                        lobby.Players.Remove(player);
+                    }
                 });
 
                 await base.OnDisconnectedAsync(exception);
             }
 
-            public async Task StartGame(string lobbyId)
+            public async Task ReadyUp(string lobbyId)
             {
-                var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
-                await Task.Run(() => lobby.Start());
-                await Clients.Group(lobbyId).SendAsync("StartGame");
+                var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
+                await Task.Run(() => lobby.VoteStart(Context.ConnectionId));
+                await Clients.Group(lobbyId).SendAsync("UpdateUserList", lobby.Players);
+                if (lobby.Players.FindAll(p => p.Ready == true).Count == lobby.Players.Count)
+                {
+                    await Clients.Group(lobbyId).SendAsync("StartGame");
+                    // await Task.Run(() => lobby.Start());
+                    // await Task.Run(() => lobby.Start());
+                }
             }
+            public void StartServerTimer(string lobbyId)
+            {
+                var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
+                Log.Information("Starting server time for {Lobby}", lobbyId);
+                lobby.StartTimer();
+            }
+            
 
             public async Task UserComplete(string lobbyId, string time)
             {
-                var lobby = lobbies.Find(e => e.LobbyId == lobbyId);
+                var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
                 await Task.Run(() => lobby.PlayerComplete(Context.ConnectionId, time));
                 await Clients.Group(lobbyId).SendAsync("UpdateScoreboard", lobby.Scores);
+            }
+
+            public Task SetDisplayName(string name)
+            {
+                Log.Information("Setting name for {Conn} to {Name}", Context.ConnectionId, name);
+                NameByConnectionId[Context.ConnectionId] = name;
+                Lobbies.ForEach(lobby =>
+                {
+                    var player = lobby.Players.Find(p => p.ConnectionId == Context.ConnectionId);
+                    player?.UpdateDisplayName(name);
+                });
+                return Task.CompletedTask;
             }
 
 

@@ -29,7 +29,6 @@ namespace CodeRacerBackend
                           .AllowCredentials();
                }));
 
-
             services.AddSignalR();
             services.AddControllers();
             

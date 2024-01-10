@@ -2,26 +2,25 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace CodeRacerBackend.CodeRacerLogic
 {
   public class Lobby
   {
     public string LobbyId { get; set; }
-
     public string LobbyName { get; set; }
-
     public string Host { get; set; }
     public int MaxPlayers { get; set; }
     public string Snippet { get; set; }
-    public List<String> Players { get; set; }
+    public List<Player> Players { get; set; }
 
-    public List<Tuple<String, TimeSpan>> Scores = new List<Tuple<string, TimeSpan>>();
-    private Stopwatch stopWatch = new Stopwatch();
+    public readonly List<Tuple<string, TimeSpan>> Scores = new List<Tuple<string, TimeSpan>>();
+    private readonly Stopwatch _stopWatch = new Stopwatch();
 
-    public string GenerateLobbyId(string user)
+    private string GenerateLobbyId(string user)
     {
-      return string.Format("{0}_{1:N}", user, Guid.NewGuid());
+      return $"{user}_{Guid.NewGuid():N}";
     }
 
     public Lobby(string lang, string user, string lobbyName, bool online)
@@ -31,16 +30,27 @@ namespace CodeRacerBackend.CodeRacerLogic
       this.MaxPlayers = online ? 4 : 1;
       this.LobbyId = GenerateLobbyId(user);
       SnippetFinder sf = new SnippetFinder();
-      // this.Snippet = sf.getSnippet(lang);
-      this.Snippet = "test";
-      this.Players = new List<string>();
+      this.Snippet = sf.GetSnippet(lang);
+      //this.Snippet = "test";
+      this.Players = new List<Player>();
+    }
+
+    public void Join(Player player)
+    {
+      Players.Add(player);
+    }
+
+    public bool HasPlayer(Player player)
+    {
+      return Players.FindIndex(p => p.ConnectionId == player.ConnectionId) != -1;
     }
 
     public Boolean Join(string connectionId)
     {
-      if (!Players.Contains(connectionId) && Players.Count != MaxPlayers)
+      
+      if (Players.FindIndex(p => p.ConnectionId == connectionId) == -1 && Players.Count != MaxPlayers)
       {
-        Players.Add(connectionId);
+        Players.Add(new Player(connectionId));
         return true;
       }
       else
@@ -51,30 +61,41 @@ namespace CodeRacerBackend.CodeRacerLogic
 
     public void Leave(string connectionId)
     {
-      Players.Remove(connectionId);
+      var player = Players.Find(player => player.ConnectionId == connectionId);
+      Players.Remove(player);
     }
 
-    public void Start()
+    public void StartTimer()
     {
-      stopWatch.Start();
-      if (stopWatch.IsRunning)
+      _stopWatch.Restart();
+      if (_stopWatch.IsRunning)
       {
-        Console.WriteLine(stopWatch.Elapsed.TotalMilliseconds);
+        Console.WriteLine(_stopWatch.Elapsed.TotalMilliseconds);
       }
       Console.WriteLine("Timer Starting for" + LobbyId);
     }
 
-    public void GameFinished(string connectionId, string time)
+    public void VoteStart(string connectionId)
     {
+      var player = Players.Find(p => p.ConnectionId == connectionId);
+      if (player == null) return;
+      player.Ready = true;
     }
 
+    private static TimeSpan GetValidScore(TimeSpan clientTime, TimeSpan serverTime)
+    {
+      var lowerLimit = serverTime.Seconds - 2;
+      return clientTime.TotalSeconds < lowerLimit ? serverTime : clientTime;
+    }
     public void PlayerComplete(string user, string time)
     {
       // server Time, use to compare.
-      // Scores.Add(new Tuple<String, TimeSpan>(user + "stopwatch", stopWatch.Elapsed));
+      var clientTime = TimeSpan.Parse(time);
+      var serverTime = _stopWatch.Elapsed;
+      var player = Players.Find(pl => pl.ConnectionId == user);
       if (Scores.Count != MaxPlayers)
       {
-        Scores.Add(new Tuple<String, TimeSpan>(user, TimeSpan.Parse(time)));
+        Scores.Add(new Tuple<string, TimeSpan>(player.Name, GetValidScore(clientTime, serverTime)));
       }
     }
   }
