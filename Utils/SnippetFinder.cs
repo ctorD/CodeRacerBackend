@@ -4,13 +4,17 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 
 namespace CodeRacerBackend.Utils
 {
-    public class SnippetFinder
+    public class SnippetFinder : ISnippetFinder
     {
-        public SnippetFinder()
+
+        private string _gitApiKey;
+        public SnippetFinder(IConfiguration configuration)
         {
+            _gitApiKey = configuration.GetSection("GitApiKey").Value;
         }
 
         private string GetRepo(string lang)
@@ -57,7 +61,7 @@ namespace CodeRacerBackend.Utils
             client.BaseAddress = new Uri("https://api.github.com/search/");
             client.DefaultRequestHeaders.Add("User-Agent", "request");
             client.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", "");
+                new AuthenticationHeaderValue("Bearer", _gitApiKey);
             
             //client.DefaultRequestHeaders.Add("Authorization", "5c394c85f95a938bf97e7f2a49af448883317f3f");
            //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
@@ -112,7 +116,7 @@ namespace CodeRacerBackend.Utils
             }
         }
 
-        public List<int> GetAllIndexes(string source, string matchString)
+        private List<int> GetAllIndexes(string source, string matchString)
         {
             List<int> test = new List<int>();
             matchString = Regex.Escape(matchString);
@@ -159,7 +163,7 @@ namespace CodeRacerBackend.Utils
             }
         }
 
-        private string GetDownloadLink(string gitUrl, string keyWord)
+        private static string GetDownloadLink(string gitUrl, string keyWord)
         {
             HttpClient client = new HttpClient();
             client.BaseAddress = new Uri(gitUrl);
