@@ -26,8 +26,7 @@ public class SnippetFinder : ISnippetFinder
         var client = new HttpClient();
         client.BaseAddress = new Uri("https://api.github.com/search/");
         client.DefaultRequestHeaders.Add("User-Agent", "request");
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", _gitApiKey);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _gitApiKey);
 
         //client.DefaultRequestHeaders.Add("Authorization", "5c394c85f95a938bf97e7f2a49af448883317f3f");
         //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

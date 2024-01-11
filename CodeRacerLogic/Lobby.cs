@@ -10,6 +10,7 @@ public class Lobby
 {
     private readonly ISnippetFinder _snippetFinder;
     private readonly Stopwatch _stopWatch = new();
+    private readonly DateTime _creationTime = new DateTime();
 
     public readonly List<Tuple<string, TimeSpan>> Scores = new();
 
@@ -33,8 +34,9 @@ public class Lobby
     public bool IsComplete()
     {
         var uniqueScoredUsers = Scores.DistinctBy(item => item.Item1);
-
-        return uniqueScoredUsers.Count() >= Players.Count;
+        var expired = (DateTime.Now - _creationTime).Minutes > 60;
+        
+        return uniqueScoredUsers.Count() >= Players.Count || expired;
     }
 
     public void Initalise(string lang, string user, string lobbyName, bool online)

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CodeRacerBackend.CodeRacerLogic;
 using CodeRacerBackend.Utils;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Memory;
 using Serilog;
 
 namespace CodeRacerBackend.Hubs
@@ -18,6 +20,27 @@ namespace CodeRacerBackend.Hubs
             public LobbyHub(ISnippetFinder snippetFinder)
             {
                 _snippetFinder = snippetFinder;
+                RemoveDates();
+            }
+
+            private readonly CancellationTokenSource _cancellationTokenSource= new CancellationTokenSource();
+
+            private void RemoveDates()
+            {
+                var checkDatesTask= new Task(
+                    () =>
+                    {
+                        while (!_cancellationTokenSource.IsCancellationRequested)
+                        {
+                            //TODO: check and delete elements here
+                            Lobbies.RemoveAll(lobby => lobby.IsComplete());
+
+                            _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMinutes(1));
+                        }
+                    },
+                    _cancellationTokenSource.Token,
+                    TaskCreationOptions.LongRunning);
+                checkDatesTask.Start();
             }
 
             public override Task OnConnectedAsync()
