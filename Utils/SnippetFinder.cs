@@ -11,7 +11,7 @@ namespace CodeRacerBackend.Utils
     public class SnippetFinder : ISnippetFinder
     {
 
-        private string _gitApiKey;
+        private readonly string _gitApiKey;
         public SnippetFinder(IConfiguration configuration)
         {
             _gitApiKey = configuration.GetSection("GitApiKey").Value;
@@ -66,9 +66,9 @@ namespace CodeRacerBackend.Utils
             //client.DefaultRequestHeaders.Add("Authorization", "5c394c85f95a938bf97e7f2a49af448883317f3f");
            //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
 
-            string urlParams = "";
+            var urlParams = "";
 
-            string keyword = "function";
+            var keyword = "function";
 
             switch (lang)
             {
@@ -174,7 +174,7 @@ namespace CodeRacerBackend.Utils
                 // Parse the response body.
                 var dataObjects = response.Content.ReadAsStringAsync().Result;
                 var jo = JObject.Parse(dataObjects);
-                var downloadUrl = jo["download_url"].ToString();
+                var downloadUrl = jo["download_url"]?.ToString();
 
                 return downloadUrl;
             }

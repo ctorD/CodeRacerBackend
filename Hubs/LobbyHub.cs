@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using CodeRacerBackend.Utils;
 
 namespace CodeRacerBackend.Hubs
@@ -24,19 +25,24 @@ namespace CodeRacerBackend.Hubs
             public override Task OnConnectedAsync()
             {
                 //TODO: Add username to cookie instead of setting each time
-                var username = Context.GetHttpContext().Request.Query["username"];
+                var username = Context.GetHttpContext().Request.Query["access_token"].FirstOrDefault(Context.ConnectionId);
+                if (username != null)
+                {
+                    SetDisplayName(username);
+                }
 
                 return base.OnConnectedAsync();
             }
 
-            public async Task CreateLobby(string user, string lobbyName, string lang, bool online)
+            public async Task CreateLobby(string lobbyName, string lang, bool online)
             {
+                var hasUser = NameByConnectionId.TryGetValue(Context.ConnectionId, out var username);
                 var lobby = new Lobby(_snippetFinder);
-                lobby.Initalise(lang, user, lobbyName, online);
+                lobby.Initalise(lang, hasUser ? username : Context.ConnectionId, lobbyName, online);
 
                 await Groups.AddToGroupAsync(Context.ConnectionId, lobbyName);
 
-                Log.Information("Created Lobby | User {UserId} | Lobby Name: {LobbyName} | Language: {Lang} | Online : {Online}", user, lobbyName, lang, online);
+                Log.Information("Created Lobby | User {Username} | Lobby Name: {LobbyName} | Language: {Lang} | Online : {Online}", hasUser ? username : Context.ConnectionId, lobbyName, lang, online);
 
                 Lobbies.Add(lobby);
             }
@@ -107,8 +113,20 @@ namespace CodeRacerBackend.Hubs
             public async Task UserComplete(string lobbyId, string time)
             {
                 var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
+
                 await Task.Run(() => lobby.PlayerComplete(Context.ConnectionId, time));
+                await UpdateLobbyList(lobby);
                 await Clients.Group(lobbyId).SendAsync("UpdateScoreboard", lobby.Scores);
+            }
+
+            private static Task UpdateLobbyList(Lobby lobby)
+            {
+                if (lobby.IsComplete())
+                {
+                    Lobbies.Remove(lobby);
+                }
+
+                return Task.CompletedTask;
             }
 
             public Task SetDisplayName(string name)

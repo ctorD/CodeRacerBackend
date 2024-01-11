@@ -9,12 +9,12 @@ namespace CodeRacerBackend.CodeRacerLogic
   public class Lobby
   {
     private readonly ISnippetFinder _snippetFinder;
-    public string LobbyId { get; set; }
-    public string LobbyName { get; set; }
-    public string Host { get; set; }
-    public int MaxPlayers { get; set; }
+    public string LobbyId { get; private set; }
+    public string LobbyName { get; private set; }
+    public string Host { get; private set; }
+    public int MaxPlayers { get; private set; }
     public string Snippet { get; set; }
-    public List<Player> Players { get; set; }
+    public List<Player> Players { get; private set; }
 
     public readonly List<Tuple<string, TimeSpan>> Scores = new List<Tuple<string, TimeSpan>>();
     private readonly Stopwatch _stopWatch = new Stopwatch();
@@ -22,6 +22,13 @@ namespace CodeRacerBackend.CodeRacerLogic
     private string GenerateLobbyId(string user)
     {
       return $"{user}_{Guid.NewGuid():N}";
+    }
+
+    public bool IsComplete()
+    {
+      var uniqueScoredUsers = Scores.DistinctBy((item) => item.Item1);
+
+      return uniqueScoredUsers.Count() >= Players.Count;
     }
 
     public void Initalise(string lang, string user, string lobbyName, bool online)

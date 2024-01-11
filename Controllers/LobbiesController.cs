@@ -1,6 +1,5 @@
 ﻿using CodeRacerBackend.Hubs.SignalRChat.Hubs;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Linq;
 
 namespace CodeRacerBackend.Controllers
@@ -10,7 +9,7 @@ namespace CodeRacerBackend.Controllers
     public class LobbiesController : ControllerBase
     {
         [HttpGet]
-        public ActionResult<String> GetLobbies()
+        public ActionResult<string> GetLobbies()
         {
             //Code to get new github snippet
 
