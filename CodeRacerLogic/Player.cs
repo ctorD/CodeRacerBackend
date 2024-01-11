@@ -7,12 +7,12 @@ public class Player
     public bool Ready { get; set; }
 
     public string Name => DisplayName ?? ConnectionId;
-
     public Player(string connectionId)
     {
         ConnectionId = connectionId;
         Ready = false;
     }
+
     public Player(string connectionId, string displayName)
     {
         ConnectionId = connectionId;
@@ -29,5 +29,4 @@ public class Player
     {
         DisplayName = name;
     }
-    
 }

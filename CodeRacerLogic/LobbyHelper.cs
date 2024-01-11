@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿namespace CodeRacerBackend.CodeRacerLogic;
 
-namespace CodeRacerBackend.CodeRacerLogic
+public class LobbyHelper
 {
-    public class LobbyHelper
+    public static void handleDisconnect(string connectionId)
     {
-        public static void handleDisconnect(string connectionId){
-
-        }
     }
 }
