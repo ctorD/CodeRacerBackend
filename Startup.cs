@@ -20,11 +20,11 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
+        var cors = Configuration.GetValue<string>("CorsAllow");
         services.AddCors(options => options.AddPolicy("CorsPolicy",
             builder =>
             {
                 builder.AllowAnyMethod().AllowAnyHeader()
-                    .WithOrigins("http://localhost:8080")
                     .AllowCredentials();
             }));
 

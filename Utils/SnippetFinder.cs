@@ -14,7 +14,8 @@ public class SnippetFinder : ISnippetFinder
 
     public SnippetFinder(IConfiguration configuration)
     {
-        _gitApiKey = configuration.GetSection("GitApiKey").Value;
+        var envKey = Environment.GetEnvironmentVariable("GitApiKey");
+        _gitApiKey = envKey ?? configuration.GetSection("GitApiKey").Value;
     }
 
     public string GetSnippet(string lang)

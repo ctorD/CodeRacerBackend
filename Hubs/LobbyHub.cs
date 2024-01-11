@@ -35,7 +35,7 @@ namespace CodeRacerBackend.Hubs
                             //TODO: check and delete elements here
                             Lobbies.RemoveAll(lobby => lobby.IsComplete());
 
-                            _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMinutes(1));
+                            _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMinutes(60));
                         }
                     },
                     _cancellationTokenSource.Token,
