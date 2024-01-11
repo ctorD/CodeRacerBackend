@@ -20,23 +20,25 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
+        var cors = Configuration.GetValue<string>("CorsAllow");
         services.AddCors(options => options.AddPolicy("CorsPolicy",
             builder =>
             {
                 builder.AllowAnyMethod().AllowAnyHeader()
-                    .WithOrigins("http://localhost:8080")
-                    .AllowCredentials();
+                    .WithOrigins(cors)
+                    
+                    .AllowCredentials().SetIsOriginAllowed(host => true);
             }));
 
         services.AddSignalR();
         services.AddControllers();
+        
         services.AddSingleton<ISnippetFinder>(provider => new SnippetFinder(Configuration));
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
-        app.UseCors("CorsPolicy");
 
         if (env.IsDevelopment()) app.UseDeveloperExceptionPage();
 
@@ -44,11 +46,11 @@ public class Startup
         if (!env.IsDevelopment())
         {
             app.UseDeveloperExceptionPage();
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
         }
 
         app.UseRouting();
-
+        app.UseCors("CorsPolicy");
         app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>

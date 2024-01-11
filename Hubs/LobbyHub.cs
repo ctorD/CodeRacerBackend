@@ -20,12 +20,12 @@ namespace CodeRacerBackend.Hubs
             public LobbyHub(ISnippetFinder snippetFinder)
             {
                 _snippetFinder = snippetFinder;
-                RemoveDates();
+                // RemoveExpired();
             }
 
             private readonly CancellationTokenSource _cancellationTokenSource= new CancellationTokenSource();
 
-            private void RemoveDates()
+            private void RemoveExpired()
             {
                 var checkDatesTask= new Task(
                     () =>
@@ -35,7 +35,7 @@ namespace CodeRacerBackend.Hubs
                             //TODO: check and delete elements here
                             Lobbies.RemoveAll(lobby => lobby.IsComplete());
 
-                            _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMinutes(1));
+                            _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMinutes(60));
                         }
                     },
                     _cancellationTokenSource.Token,
@@ -95,7 +95,7 @@ namespace CodeRacerBackend.Hubs
                 Console.WriteLine("Disconnection");
 
                 NameByConnectionId.Remove(Context.ConnectionId);
-                Lobbies.RemoveAll(lobby => lobby.Host == Context.ConnectionId);
+                // Lobbies.RemoveAll(lobby => lobby.Host == Context.ConnectionId);
                 Lobbies.ForEach(lobby =>
                 {
                     var player = lobby.Players.Find(p => p.ConnectionId == Context.ConnectionId);
