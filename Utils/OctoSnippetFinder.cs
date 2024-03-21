@@ -32,6 +32,7 @@ public class OctoSnippetFinder : ISnippetFinder
         switch (lang)
         {
             case Language.JavaScript:
+            case Language.TypeScript:
                 return "function";
             case Language.CSharp:
                 return "public";
@@ -47,28 +48,22 @@ public class OctoSnippetFinder : ISnippetFinder
 
     public string GetSnippet(Language lang)
     {
-        var test2 = _client.Search.SearchCode(new SearchCodeRequest(GetKeyword(lang))
+        var codeSample = _client.Search.SearchCode(new SearchCodeRequest(GetKeyword(lang))
         {
             Language = lang,
         }).Result.Items[3];
 
-        var testCont = _client.Repository.Content.GetAllContents(repositoryId: test2.Repository.Id, test2.Path).Result;
-        var file = testCont[0].Content;
-        file = file.Trim();
+        var testCont = _client.Repository.Content.GetAllContents(repositoryId: codeSample.Repository.Id, codeSample.Path).Result;
+        var rawCodeString = testCont[0].Content;
+        //Trim out function block
+        rawCodeString = rawCodeString.Trim();
         var keyword = GetKeyword(lang);
-
-        var allIndexes = GetAllIndexes(file, keyword);
-
+        var allIndexes = GetAllIndexes(rawCodeString, keyword);
         var randomIndex = new Random().Next(0, allIndexes.Count);
-
-        file = file.Substring(allIndexes[randomIndex], file.Length - allIndexes[randomIndex]);
-
-        var beforeFunctionBlock = file.Substring(0, file.IndexOf('{'));
-
-        var matches = Regex.Matches(file, @"{((?>[^{}]+|{(?<c>)|}(?<-c>))*(?(c)(?!)))");
-
+        rawCodeString = rawCodeString.Substring(allIndexes[randomIndex], rawCodeString.Length - allIndexes[randomIndex]);
+        var beforeFunctionBlock = rawCodeString.Substring(0, rawCodeString.IndexOf('{'));
+        var matches = Regex.Matches(rawCodeString, @"{((?>[^{}]+|{(?<c>)|}(?<-c>))*(?(c)(?!)))");
         var functionBlock = matches[0].Value + "\n }";
-
         var fullFunction = beforeFunctionBlock + functionBlock;
 
         return fullFunction;
