@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using CodeRacerBackend.Utils;
+using Octokit;
 
 namespace CodeRacerBackend.CodeRacerLogic;
 
@@ -31,11 +32,26 @@ public class Lobby
         return $"{user}_{Guid.NewGuid():N}";
     }
 
+    private Language LangTextToEnum(string lang)
+    {
+        switch (lang)
+        {
+            case "js":
+                return Language.JavaScript;
+            case "ts":
+                return Language.TypeScript;
+            case "csharp":
+                return Language.CSharp;
+            default:
+                return Language.JavaScript;
+        }
+    }
+
     public bool IsComplete()
     {
         var uniqueScoredUsers = Scores.DistinctBy(item => item.Item1);
         var expired = (DateTime.Now - _creationTime).Minutes > 60;
-        
+
         return uniqueScoredUsers.Count() >= Players.Count || expired;
     }
 
@@ -45,8 +61,7 @@ public class Lobby
         Host = user;
         MaxPlayers = online ? 4 : 1;
         LobbyId = GenerateLobbyId(user);
-        Snippet = _snippetFinder.GetSnippet(lang);
-        //this.Snippet = "test";
+        Snippet = _snippetFinder.GetSnippet(LangTextToEnum(lang));
         Players = new List<Player>();
     }
 

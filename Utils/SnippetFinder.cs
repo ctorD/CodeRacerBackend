@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
+using Octokit;
 
 namespace CodeRacerBackend.Utils;
 
@@ -28,9 +29,6 @@ public class SnippetFinder : ISnippetFinder
         client.BaseAddress = new Uri("https://api.github.com/search/");
         client.DefaultRequestHeaders.Add("User-Agent", "request");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _gitApiKey);
-
-        //client.DefaultRequestHeaders.Add("Authorization", "5c394c85f95a938bf97e7f2a49af448883317f3f");
-        //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
 
         var urlParams = "";
 
@@ -76,6 +74,11 @@ public class SnippetFinder : ISnippetFinder
 
         Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
         return null;
+    }
+
+    public string GetSnippet(Language lang)
+    {
+        throw new NotImplementedException();
     }
 
     private string GetRepo(string lang)

@@ -11,7 +11,6 @@ public class Program
     {
         Log.Logger = new LoggerConfiguration().Enrich.FromLogContext()
             .WriteTo.Console().CreateLogger();
-
         try
         {
             Log.Information("Starting up");

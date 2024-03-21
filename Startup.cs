@@ -33,7 +33,7 @@ public class Startup
         services.AddSignalR();
         services.AddControllers();
         
-        services.AddSingleton<ISnippetFinder>(provider => new SnippetFinder(Configuration));
+        services.AddSingleton<ISnippetFinder>(provider => new OctoSnippetFinder(Configuration));
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
