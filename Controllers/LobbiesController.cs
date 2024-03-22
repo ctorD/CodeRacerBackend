@@ -8,12 +8,17 @@ namespace CodeRacerBackend.Controllers;
 [ApiController]
 public class LobbiesController : ControllerBase
 {
+    private readonly ILobbyManager lobbyManager;
+
+    public LobbiesController(ILobbyManager lobbyManager)
+    {
+        this.lobbyManager = lobbyManager;
+    }
+
     [HttpGet]
     public ActionResult<string> GetLobbies()
     {
-        //Code to get new github snippet
-
-        var lobbies = LobbyHub.Lobbies.ToArray().Where(e => e.MaxPlayers > 1);
+        var lobbies = lobbyManager.GetAllLobbies().ToArray().Where(e => e.MaxPlayers > 1);
 
         return Ok(lobbies);
     }

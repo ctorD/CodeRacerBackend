@@ -11,8 +11,7 @@ public class Lobby
 {
     private readonly ISnippetFinder _snippetFinder;
     private readonly Stopwatch _stopWatch = new();
-    private readonly DateTime _creationTime = new DateTime();
-
+    private DateTime _creationTime = new DateTime();
     public readonly List<Tuple<string, TimeSpan>> Scores = new();
 
     public Lobby(ISnippetFinder snippetFinder)
@@ -45,6 +44,10 @@ public class Lobby
             default:
                 return Language.JavaScript;
         }
+    }
+    
+    public bool IsExpired(){
+        return DateTime.Now.AddHours(-1) > _creationTime;
     }
 
     public bool IsComplete()

@@ -1,5 +1,7 @@
+using System;
 using CodeRacerBackend.Hubs;
 using CodeRacerBackend.Utils;
+using Coravel;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -31,9 +33,11 @@ public class Startup
             }));
 
         services.AddSignalR();
+        services.AddScheduler();
         services.AddControllers();
         
         services.AddSingleton<ISnippetFinder>(provider => new OctoSnippetFinder(Configuration));
+        services.AddSingleton<ILobbyManager>(provider => new LobbyManager());
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -49,6 +53,9 @@ public class Startup
             // app.UseHttpsRedirection();
         }
 
+        app.ApplicationServices.UseScheduler((scheduler) => {
+            scheduler.Schedule(() => Console.WriteLine("dadad"));
+        });
         app.UseRouting();
         app.UseCors("CorsPolicy");
         app.UseAuthorization();

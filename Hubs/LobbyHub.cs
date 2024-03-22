@@ -12,34 +12,35 @@ namespace CodeRacerBackend.Hubs
 {
     public class LobbyHub : Hub
     {
-        public static readonly List<Lobby> Lobbies = new();
         private static readonly Dictionary<string, string> NameByConnectionId = new();
         private readonly ISnippetFinder _snippetFinder;
+        private readonly ILobbyManager _lobbyManager;
 
-        public LobbyHub(ISnippetFinder snippetFinder)
+        public LobbyHub(ISnippetFinder snippetFinder, ILobbyManager lobbyManager)
         {
             _snippetFinder = snippetFinder;
+            _lobbyManager = lobbyManager;
         }
 
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
-        private void RemoveExpired()
-        {
-            var checkDatesTask = new Task(
-                () =>
-                {
-                    while (!_cancellationTokenSource.IsCancellationRequested)
-                    {
-                        //TODO: check and delete elements here
-                        Lobbies.RemoveAll(lobby => lobby.IsComplete());
+        // private void RemoveExpired()
+        // {
+        //     var checkDatesTask = new Task(
+        //         () =>
+        //         {
+        //             while (!_cancellationTokenSource.IsCancellationRequested)
+        //             {
+        //                 //TODO: check and delete elements here
+        //                 Lobbies.RemoveAll(lobby => lobby.IsComplete());
 
-                        _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMinutes(60));
-                    }
-                },
-                _cancellationTokenSource.Token,
-                TaskCreationOptions.LongRunning);
-            checkDatesTask.Start();
-        }
+        //                 _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMinutes(60));
+        //             }
+        //         },
+        //         _cancellationTokenSource.Token,
+        //         TaskCreationOptions.LongRunning);
+        //     checkDatesTask.Start();
+        // }
 
         public override Task OnConnectedAsync()
         {
@@ -63,12 +64,12 @@ namespace CodeRacerBackend.Hubs
                 "Created Lobby | User {Username} | Lobby Name: {LobbyName} | Language: {Lang} | Online : {Online}",
                 hasUser ? username : Context.ConnectionId, lobbyName, lang, online);
 
-            Lobbies.Add(lobby);
+            _lobbyManager.AddLobby(lobby);
         }
 
         public async void JoinLobby(string lobbyId)
         {
-            var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
+            var lobby = _lobbyManager.FindLobby(lobbyId);
             NameByConnectionId.TryGetValue(Context.ConnectionId, out var name);
             var player = name != null ? new Player(Context.ConnectionId, name) : new Player(Context.ConnectionId);
             if (!lobby.HasPlayer(player))
@@ -85,7 +86,7 @@ namespace CodeRacerBackend.Hubs
 
         public async void LeaveLobby(string lobbyName, string userName)
         {
-            await Task.Run(() => { Lobbies.Find(e => e.LobbyName == lobbyName).Leave(Context.ConnectionId); });
+            await Task.Run(() => { _lobbyManager.FindLobby(lobbyName).Leave(Context.ConnectionId); });
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
@@ -94,7 +95,7 @@ namespace CodeRacerBackend.Hubs
 
             NameByConnectionId.Remove(Context.ConnectionId);
             // Lobbies.RemoveAll(lobby => lobby.Host == Context.ConnectionId);
-            Lobbies.ForEach(lobby =>
+            _lobbyManager.GetAllLobbies().ForEach(lobby =>
             {
                 var player = lobby.Players.Find(p => p.ConnectionId == Context.ConnectionId);
                 if (player != null) lobby.Players.Remove(player);
@@ -105,7 +106,7 @@ namespace CodeRacerBackend.Hubs
 
         public async Task ReadyUp(string lobbyId)
         {
-            var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
+            var lobby = _lobbyManager.FindLobby(lobbyId);
             await Task.Run(() => lobby.VoteStart(Context.ConnectionId));
             await Clients.Group(lobbyId).SendAsync("UpdateUserList", lobby.Players);
             if (lobby.Players.FindAll(p => p.Ready).Count == lobby.Players.Count)
@@ -114,7 +115,7 @@ namespace CodeRacerBackend.Hubs
 
         public void StartServerTimer(string lobbyId)
         {
-            var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
+            var lobby = _lobbyManager.FindLobby(lobbyId);
             Log.Information("Starting server time for {Lobby}", lobbyId);
             lobby.StartTimer();
         }
@@ -122,16 +123,16 @@ namespace CodeRacerBackend.Hubs
 
         public async Task UserComplete(string lobbyId, string time)
         {
-            var lobby = Lobbies.Find(e => e.LobbyId == lobbyId);
+            var lobby = _lobbyManager.FindLobby(lobbyId);
 
             await Task.Run(() => lobby.PlayerComplete(Context.ConnectionId, time));
             await UpdateLobbyList(lobby);
             await Clients.Group(lobbyId).SendAsync("UpdateScoreboard", lobby.Scores);
         }
 
-        private static Task UpdateLobbyList(Lobby lobby)
+        private Task UpdateLobbyList(Lobby lobby)
         {
-            if (lobby.IsComplete()) Lobbies.Remove(lobby);
+            if (lobby.IsComplete()) _lobbyManager.RemoveLobby(lobby);
 
             return Task.CompletedTask;
         }
@@ -140,7 +141,7 @@ namespace CodeRacerBackend.Hubs
         {
             Log.Information("Setting name for {Conn} to {Name}", Context.ConnectionId, name);
             NameByConnectionId[Context.ConnectionId] = name;
-            Lobbies.ForEach(lobby =>
+            _lobbyManager.GetAllLobbies().ForEach(lobby =>
             {
                 var player = lobby.Players.Find(p => p.ConnectionId == Context.ConnectionId);
                 player?.UpdateDisplayName(name);
