@@ -11,7 +11,9 @@ public class OctoSnippetFinder : ISnippetFinder
     private GitHubClient _client;
     public OctoSnippetFinder(IConfiguration configuration)
     {
-        var gitKey = configuration.GetValue<string>("GitKey");
+        // var gitKey = configuration.GetValue<string>("GitKey");
+        var envKey = Environment.GetEnvironmentVariable("GitApiKey");
+        var gitKey = envKey ?? configuration.GetSection("GitApiKey").Value;
         _client = new GitHubClient(new ProductHeaderValue("Code-Racer"))
         {
             Credentials = new Credentials(gitKey)
