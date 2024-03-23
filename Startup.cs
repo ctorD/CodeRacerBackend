@@ -28,7 +28,6 @@ public class Startup
             {
                 builder.AllowAnyMethod().AllowAnyHeader()
                     .WithOrigins(cors)
-                    
                     .AllowCredentials().SetIsOriginAllowed(host => true);
             }));
 
@@ -38,6 +37,7 @@ public class Startup
         
         services.AddSingleton<ISnippetFinder>(provider => new OctoSnippetFinder(Configuration));
         services.AddSingleton<ILobbyManager>(provider => new LobbyManager());
+        services.AddTransient<LobbyCleardownTask>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -54,7 +54,7 @@ public class Startup
         }
 
         app.ApplicationServices.UseScheduler((scheduler) => {
-            scheduler.Schedule(() => Console.WriteLine("dadad"));
+            scheduler.Schedule<LobbyCleardownTask>().DailyAtHour(1);
         });
         app.UseRouting();
         app.UseCors("CorsPolicy");

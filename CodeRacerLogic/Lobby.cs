@@ -47,15 +47,15 @@ public class Lobby
     }
     
     public bool IsExpired(){
-        return DateTime.Now.AddHours(-1) > _creationTime;
+        // return DateTime.Now.AddHours(-1) > _creationTime;
+        return DateTime.Now.AddMinutes(-1) > _creationTime;
     }
 
     public bool IsComplete()
     {
         var uniqueScoredUsers = Scores.DistinctBy(item => item.Item1);
-        var expired = (DateTime.Now - _creationTime).Minutes > 60;
 
-        return uniqueScoredUsers.Count() >= Players.Count || expired;
+        return uniqueScoredUsers.Count() >= Players.Count;
     }
 
     public void Initalise(string lang, string user, string lobbyName, bool online)

@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using CodeRacerBackend.Hubs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CodeRacerBackend.Controllers;
